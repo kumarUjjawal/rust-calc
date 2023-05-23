@@ -83,3 +83,60 @@ fn parse_number(&mut self) -> Result<Node, ParseError> {
         _ => Err(ParseError::UnableToParse("Unable to parse".to_string())),
     }
 }
+
+fn generate_ast(&mut self, oper_prec: OperPrec) -> Result<Node, ParseError> {
+    let mut left_expr = self.parse_number()?;
+
+    while oper_prec < self.current_token.get_oper_prec() {
+        if self.current_token == Token::EOF {
+            break;
+        }
+
+        let right_expr = self.convert_token_to_node(left_expr.clone())?;
+        left_expr = right_expr;
+    }
+
+    Ok(left_expr)
+}
+
+fn convert_token_to_node(&mut self, left_expr: Node) -> 
+Result<Node, ParseError> {
+    match self.current_token {
+        Token::Add => {
+            self.get_next_token()?;
+            let right_expr = self.generate_ast(OperPrec::AddSub)?;
+            Ok(Node::Add(Box::new(left_expr)))
+        }
+
+        Token::Subtract => {
+            self.get_next_token()?;
+            let right_expr = self.generate_ast(OperPrec::AddSub)?;
+            Ok(Node::Subtract(Box::new(left_expr),
+                Box::new(right_expr)))
+        }
+        Token::Multiply => {
+            self.get_next_token()?;
+            let right_expr = self.generate_ast(OperPrec::MulDiv)?;
+            Ok(Node::Multiply(Box::new(left_expr),
+                Box::new(right_expr)))
+        } 
+        Token::Divide => {
+            self.get_next_token()?;
+            let right_expr = self.generate_ast(OperPrec::MulDiv)?;
+            Ok(Node::Divide(Box::new(left_expr),
+                Box::new(right_expr)))
+        }
+        Token::Caret => {
+            self.get_next_token()?;
+            let right_expr = self.generate_ast(OperPrec::Power)?;
+            Ok(Node::Caret(Box::new(left_expr),
+                Box::new(right_expr)))
+        }
+
+        _ => Err(ParseError::InvalidOperator(format!(
+                    "Please enter valid operator {:?}",
+                    self.current_token
+                    ))),
+
+    }
+}
