@@ -5,7 +5,29 @@
 // the arithmetic expression and then stores the first token in its current_token field.
 // parse(): To generate the AST from the tokens, which is the main output of the parser
 //
+#[derive(Debug)]
+pub enum ParseError {
+    UnanleToParse(String),
+    InvalidOperator(String),
+}
 
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self {
+            self::ParseError::UnanleToParse(e) => write!(f, 
+                "Error in evaluating {}",e),
+            self::ParseError::InvalidOperator(e) => write!(f, 
+                "Error in evaluating {}", e),
+        }
+    }
+}
+
+impl std::convert::From<std::boxed::Box<dyn std::error::Error>>
+for ParseError {
+    fn from(_evalerr: std:boxed::Box<dyn std::error::Error) -> Self {
+        return ParseError::UnanleToParse("Unable to Parse".into());
+    }
+}
 
 Result<Self, ParseError> {
     let mut lexer = Tokenizer::new(expr);
